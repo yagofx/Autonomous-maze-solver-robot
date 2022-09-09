@@ -1,0 +1,381 @@
+
+/*
+Robot laberinto, V1.1 all cases
+*/
+//echo && trig//
+int echo_p[] = {2, 5 , 6 }; //echo: front, left, right
+int trig_p[] = {4, 3, 11}; //trig: front, left, right
+
+//distances//                                                             
+float dist[3];   //distance: front, left, right
+float t[3];
+float d[3];
+float d2[3];
+
+//Walls//
+int f_w;  //1 = paret , 0 = es pot avançar
+int l_w; //1 = paret , 0 = es pot avançar
+int r_w; //1 = paret , 0 = es pot avançar
+int type_w;
+
+//Motors//
+int left_f = 7;
+int right_f = 13;
+
+int left_b = 8;
+int right_b = 12;
+
+int w_m[2]; //potencia motors
+
+//Position//
+bool mov = false;
+bool fake = false;
+bool prior = false; //false always left, true always right
+bool rot = false;
+
+int t_for = 600;     //temps que avançara 
+int t_rot = 430;     //temp en girar 90º sobre ell mateix
+
+//Distancies
+float front_d(){  //llegeix la distancia frontal
+ digitalWrite(trig_p[0], LOW);
+ delayMicroseconds(2);
+ digitalWrite(trig_p[0], HIGH);
+ delayMicroseconds(10);
+ digitalWrite(trig_p[0], LOW);
+
+ t[0] = pulseIn(echo_p[0], HIGH);
+
+ d[0] = t[0] / 58.27505;
+
+ d[0] = constrain(d[0], 0, 100);
+  return d[0];
+}
+
+float left_d(){ //legeix la distancia de l'esquerra
+ digitalWrite(trig_p[1], LOW);
+ delayMicroseconds(2);
+ digitalWrite(trig_p[1], HIGH);
+ delayMicroseconds(10);
+ digitalWrite(trig_p[1], LOW);
+
+ t[1] = pulseIn(echo_p[1], HIGH);
+
+ d[1] = t[1] / 58.27505;
+
+ d[1] = constrain(d[1], 1, 30);
+
+ return d[1];
+ }
+
+float right_d(){  //llegeix la distanciaq de la dreta
+ digitalWrite(trig_p[2], LOW);
+ delayMicroseconds(2);
+ digitalWrite(trig_p[2], HIGH);
+ delayMicroseconds(10);
+ digitalWrite(trig_p[2], LOW);
+
+ t[2] = pulseIn(echo_p[2], HIGH);
+
+ d[2] = t[2] / 58.27505;
+
+ d[2] = constrain(d[2], 1, 30);
+
+ return d[2];
+ }
+
+void forward(){ //funcio endavant amb alineació autonoma
+  digitalWrite(left_f, HIGH);
+ digitalWrite(left_b, LOW);
+ digitalWrite(right_f, HIGH);
+ digitalWrite(right_b, LOW);
+  w_m[0] = map(dist[1], 5, 6, 255, 100);
+ w_m[1] = map(dist[2], 5, 6, 255, 100);
+
+ analogWrite(9, w_m[0]);
+ analogWrite(10, w_m[1]);
+ }
+
+void forward1(){    //funcio endavant simple
+  digitalWrite(left_f, HIGH);
+ digitalWrite(left_b, LOW);
+ digitalWrite(right_f, HIGH);
+ digitalWrite(right_b, LOW);
+  w_m[0] = 255;
+ w_m[1] = 255;
+  analogWrite(9, w_m[0]);
+ analogWrite(10, w_m[1]);
+
+ delay(t_for);
+
+ }
+
+void left(){  //gira a l'esquerra
+ digitalWrite(left_b, HIGH);
+ digitalWrite(left_f, LOW);
+ digitalWrite(right_f, HIGH);
+ digitalWrite(right_b, LOW);
+ 
+ w_m[0] = 255;
+ w_m[1] = 255;
+  analogWrite(9, w_m[0]);
+ analogWrite(10, w_m[1]);
+  mov = true;
+ }
+
+void right(){ //gira a la dreta
+ digitalWrite(left_f, HIGH);
+ digitalWrite(left_b, LOW);
+ digitalWrite(right_b, HIGH);
+ digitalWrite(right_f, LOW);
+
+ w_m[0] = 255;
+ w_m[1] = 255;
+  analogWrite(9, w_m[0]);
+ analogWrite(10, w_m[1]);
+ mov = true;
+ }
+void stop_all(){ //apaga tot
+
+ digitalWrite(left_f, LOW);
+ digitalWrite(left_b, LOW);
+ digitalWrite(right_f, LOW);
+ digitalWrite(right_b, LOW);
+  w_m[0] = 0;
+ w_m[1] = 0;
+  analogWrite(9, w_m[0]);
+ analogWrite(10, w_m[1]);
+
+ mov = false;
+ }
+
+
+void setup() {
+ Serial.begin(115200);
+ pinMode(trig_p[0], OUTPUT);
+ pinMode(trig_p[1], OUTPUT);
+ pinMode(trig_p[2], OUTPUT);
+ pinMode(echo_p[0], INPUT);
+ pinMode(echo_p[1], INPUT);
+ pinMode(echo_p[2], INPUT);
+ pinMode(left_f, OUTPUT);
+ pinMode(left_b, OUTPUT);
+ pinMode(right_f, OUTPUT);
+ pinMode(right_b, OUTPUT);
+}
+
+void loop() {
+  if(mov == false){
+   dist[0] = front_d();
+   dist[1] = left_d();
+   dist[2] = right_d();
+   }
+  if (dist[0] < 25)   //si la distancia frontal < 25, f_w = 1 sino f_w = 0
+   f_w = 1;
+   else
+   f_w = 0;
+ if (dist[1] < 20) //si la distancia de l'esquerra < 20, l_w = 1 sino l_w = 0;
+   l_w = 1;
+   else
+   l_w = 0;
+ if (dist[2] < 20) //si la distancia de la dreta < 20, r_w = 1 sino r_w = 0;
+   r_w = 1;
+   else
+   r_w = 0;
+
+ if (f_w == 0 && l_w == 1 && r_w == 1) //nomes pot avançar
+   type_w = 0;
+ if (f_w == 1 && l_w == 1 && r_w == 0) //nomes dreta
+   type_w = 1;
+ if (f_w == 1 && l_w == 0 && r_w == 1) //nomes esuqerra
+   type_w = 2;
+ if (f_w == 1 && l_w == 0 && r_w == 0) //esquerra o dreta
+   type_w = 3;
+ if (f_w == 0 && l_w == 1 && r_w == 0) //endavant o dreta
+   type_w = 4;
+ if (f_w == 0 && l_w == 0 && r_w == 1) //endavant o esuqerra
+   type_w = 5;
+ if (f_w == 1 && l_w == 1 && r_w == 1) //sense sortida
+   type_w = 6;
+
+
+
+
+
+switch(type_w) {
+     case 0: //cas 0, avança aplicant el funció amb alineacio autonoma
+     stop_all();
+     forward();
+     fake = false;
+     rot = false;
+     break;
+
+     case 1:  //cas 1, avança - gira la dreta - avança
+    
+     stop_all();
+     delay(1000);
+     if (fake == false && rot == false){
+     forward1();
+     delay(t_for);
+     stop_all();
+     delay(1000);
+       }
+     right();
+     delay(t_rot);
+     stop_all();
+     delay(1000);
+     forward1();
+     delay(t_for);
+     stop_all();
+     rot = true;
+    
+     break;
+
+     case 2:  //cas 2, avança - gira a l'esquerra - avança
+    
+     stop_all();
+     delay(1000);
+    
+     if (fake == false && rot == false){
+     forward1();
+     delay(t_for);
+     stop_all();
+     delay(1000);
+     }
+    
+     left();
+     delay(t_rot);
+     stop_all();
+     delay(1000);
+     forward1();
+     delay(t_for);
+     stop_all();
+     rot = true;
+    
+     break;
+
+     case 3:  //depenent la prioritat gira a l'esquerra o a la dreta
+    
+     stop_all();
+     delay(1000);
+
+     if (fake == false && rot == false){
+     forward1();
+     delay(t_for);
+     stop_all();
+       }
+     if (prior == false){
+       left();
+       delay(t_rot);
+       stop_all();
+         }
+       else{
+         right();
+         delay(t_rot);
+         stop_all();
+           }
+         forward1();
+         delay(t_for);
+         stop_all();
+         fake = false;
+         rot = true;
+        
+     break;
+
+     case 4:   //depenent de la prioritat, segueix endavant o gira a la dreta
+    
+     stop_all();
+     delay(1000);
+    
+     if (fake == false){
+       forward1();
+       delay(t_for);
+       stop_all();
+       }
+
+     if (prior == false){
+       forward1();
+       delay(t_for);
+       stop_all();
+       }
+       else{
+         right();
+         delay(t_rot);
+         stop_all();
+         forward1();
+         delay(t_for);
+         stop_all();
+         }
+        
+     break;
+
+     case 5:  //depenent de la prioritat, gira a l'esquerra o endavant
+    
+     stop_all();
+     delay(1000);
+    
+     if (fake == false){
+       forward1();
+       delay(t_for);
+       stop_all();
+       }
+      
+     if (prior == false){
+       left();
+       delay(t_rot);
+       stop_all();
+       delay(1000);
+       forward1();
+       delay(t_for);
+       stop_all();
+       }
+       else{
+         forward1();
+         delay(t_for);
+         stop_all();
+         }
+        
+     break;
+
+     case 6:  //gira 180 º
+    
+     stop_all();
+     delay(1000);
+     forward1();
+     delay(t_for);
+     stop_all();
+    
+     dist[0] = front_d();
+
+     if (dist[0] > 10){
+       fake = true;
+       }
+       else{
+       fake = false;
+       left();
+       delay(t_rot);
+       stop_all();
+       delay(1000);
+       left();
+       delay(t_rot);
+       stop_all();  
+       }
+      
+     break;
+   }
+ Serial.print(dist[0]);   //imprimeix totes aquestes variables
+ Serial.print(", ");
+ Serial.print(dist[1]);
+ Serial.print(", ");
+ Serial.print(dist[2]);
+ Serial.print(", ");
+ Serial.print(f_w);
+ Serial.print(", ");
+ Serial.print(l_w);
+ Serial.print(", ");
+ Serial.print(r_w);
+ Serial.print(", ");
+ Serial.println(type_w);
+ }
+
+

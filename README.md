@@ -24,9 +24,9 @@ If It is case 0, that means we are only able to move forward and we run the forw
 
 If it is case 1 then we check if the fake and rot booleans are false and then we move forward, rotate 90 degrees to the right and we move forward another time.
 
-if It is case 2, we check if the fake and rotate are both false, if it is the case we move forward if it is not then we rotate 90 degrees straightaway without moving forward and then we move forward.
+If It is case 2, we check if the fake and rotate are both false, if it is the case we move forward if it is not then we rotate 90 degrees straightaway without moving forward and then we move forward.
 
-if It is case 3, we check if the fake and rotate are both false, if it's the case we move forward if it isn't we check the prior variable. If It is false that means that the priority of the robot will be to go to the left or else it will rotate to the right and move forward.
+If It is case 3, we check if the fake and rotate are both false, if it's the case we move forward if it isn't we check the prior variable. If It is false that means that the priority of the robot will be to go to the left or else it will rotate to the right and move forward.
 
 If It is case 4, if check if false then we move forward if It isn't we won't. Then we'll check if prior is false if it is then we'll move forward straight away if it isn't we'll turn to the right and then we'll move forward.
 If It is case 5, if fake is false then will move forward, if prior is false we'll turn left and move forward or else we'll just move forward.
